@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Appli pizzas</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css"
+	rel="stylesheet"
+	integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
+	crossorigin="anonymous">
+</head>
+<body>
+
+	<div>
+		<input class='btn btn-warning' type="button" value="Ajouter des pizzas" onclick="ajouter()" />
+	</div>
+
+	<div id="succes"></div>
+	<table class="table">
+		<thead>
+			<tr>
+
+				<th scope="col">Nom</th>
+				<th scope="col">Description</th>
+				<th scope="col">Prix</th>
+				<th scope="col">Gestion</th>
+			</tr>
+		</thead>
+		<tbody id="listePizzas">
+			
+		</tbody>
+	</table>
+	<div id="echec" style="color: red"></div>
+
+
+	<script type="text/javascript">
+		function createXHR() {
+			if (window.XMLHttpRequest) //  Objet standard
+			{
+				xhr = new XMLHttpRequest(); //  Firefox, Safari, ...
+			} else if (window.ActiveXObject) //  Internet Explorer
+			{
+				xhr = new ActiveXObject("Msxml2.XMLHTTP");
+			}
+
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 4) {
+					if (xhr.status == 200) {
+						succes(xhr.responseText);//xhr.responseXML si réponse au format XML
+					} else {
+						echec(xhr.status, xhr.responseText);
+					}
+				}
+			};
+			return xhr;
+		}
+
+		function ajouter() {
+			var xhr = createXHR();
+
+			/*datasFormulaire = "type=" + encodeURIComponent("valeurType")
+					+ "&couleur=" + encodeURIComponent("valeurCouleur");*/
+
+			xhr.open("POST", "/rest/pizzas", true);
+			xhr.setRequestHeader("Accept", "application/json");
+			xhr.send(null);
+			lister();
+		}
+
+		function modifier(id) {
+			var init = {
+				method: 'PUT',	
+			};
+			
+			fetch("/rest/pizzas/" + id, init).then(lister());
+		}
+
+		function supprimer(id) {
+			var init = {
+				method: 'DELETE',
+			};
+			
+			fetch("/rest/pizzas/" + id, init).then(lister());
+		}
+
+		function lister() {
+			fetch("/rest/pizzas").then(function(response) {
+				var contentType = response.headers.get("content-type");
+  				if(contentType && contentType.indexOf("application/json") !== -1) {
+    				return response.json().then(function(json) {
+      					var pizzas = json;
+      					var ligneToAdd = "";
+      					for (p in pizzas) {	
+      						ligneToAdd += "<tr>";
+      						ligneToAdd += "<td>" + pizzas[p].libelle + "</td>";
+      						ligneToAdd += "<td>" + pizzas[p].description + "</td>";
+      						ligneToAdd += "<td>" + pizzas[p].prix + "</td>";
+      						ligneToAdd += 
+      						"<td>" +
+      							"<input class='btn btn-success' type='button' value='Modifier' onclick='modifier(" + pizzas[p].id + ")'>" +
+      							"<input class='btn btn-danger' type='button' value='Supprimer' onclick='supprimer(" + pizzas[p].id + ")'>" +
+      						"</td>";
+      						ligneToAdd += "</tr>";
+      					}			
+      					document.getElementById("listePizzas").innerHTML = ligneToAdd;
+      					document.getElementById("echec").innerHTML = "";
+    				});
+  				}
+			});
+		}
+
+		function succes(response) 
+		{
+			var pizzas = JSON.parse(response);
+			var ligneToAdd = "";
+			for (p in pizzas) {	
+				ligneToAdd += "<tr>";
+				ligneToAdd += "<td>" + pizzas[p].libelle + "</td>";
+				ligneToAdd += "<td>" + pizzas[p].description + "</td>";
+				ligneToAdd += "<td>" + pizzas[p].prix + "</td>";
+				ligneToAdd += 
+				"<td>" +
+					"<input class='btn btn-success' type='button' value='Modifier' onclick='modifier(" + pizzas[p].id + ")'>" +
+					"<input class='btn btn-danger' type='button' value='Supprimer' onclick='supprimer(" + pizzas[p].id + ")'>" +
+				"</td>";
+				ligneToAdd += "</tr>";
+			}			
+
+			
+
+			document.getElementById("listePizzas").innerHTML = ligneToAdd;
+			document.getElementById("echec").innerHTML = "";
+		}
+
+		function echec(codeReponse, reponse) {
+			document.getElementById("echec").innerHTML = reponse;
+			document.getElementById("succes").innerHTML = "";
+		}
+	</script>
+</body>
+</html>
